@@ -1,122 +1,253 @@
 import 'package:flutter/material.dart';
+import 'models/plat.dart';
+import 'widgets/category_filter.dart';
+import 'widgets/plat_card.dart';
+import 'widgets/plat_detail_page.dart';
+import 'data/menu_data.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const RestaurantMenuApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+/// Widget principal de l'application
+class RestaurantMenuApp extends StatelessWidget {
+  const RestaurantMenuApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Menu Restaurant',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        // Palette de couleurs moderne : tons chauds et élégants
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFE67E22), // Orange brûlé
+          primary: const Color(0xFFE67E22),
+          secondary: const Color(0xFF34495E), // Bleu grisâtre
+          surface: Colors.white,
+          background: const Color(0xFFF5F6FA), // Gris très clair
+        ),
+        useMaterial3: true,
+        // AppBar avec fond dégradé
+        appBarTheme: const AppBarTheme(
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: Color(0xFFE67E22),
+          foregroundColor: Colors.white,
+        ),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MenuPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+/// Page principale du menu avec système de filtrage et gestion des favoris
+class MenuPage extends StatefulWidget {
+  const MenuPage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MenuPage> createState() => _MenuPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _MenuPageState extends State<MenuPage> {
+  // Catégorie sélectionnée par défaut
+  String categorieSelectionnee = 'Tous';
+  
+  // Set des IDs des plats favoris
+  final Set<String> _favoris = {};
 
-  void _incrementCounter() {
+  /// Filtre les plats selon la catégorie sélectionnée
+  List<Plat> get platsFiltres {
+    if (categorieSelectionnee == 'Favoris') {
+      return menuComplet.where((plat) => _favoris.contains(plat.id)).toList();
+    }
+    if (categorieSelectionnee == 'Tous') {
+      return menuComplet;
+    }
+    return menuComplet
+        .where((plat) => plat.categorie == categorieSelectionnee)
+        .toList();
+  }
+
+  /// Callback appelé lors de la sélection d'une catégorie
+  void _onCategorieSelectionnee(String categorie) {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      categorieSelectionnee = categorie;
     });
+  }
+
+  /// Toggle le statut favori d'un plat
+  void _toggleFavori(String platId) {
+    setState(() {
+      if (_favoris.contains(platId)) {
+        _favoris.remove(platId);
+      } else {
+        _favoris.add(platId);
+      }
+    });
+  }
+
+  /// Vérifie si un plat est en favori
+  bool _estFavori(String platId) {
+    return _favoris.contains(platId);
+  }
+
+  /// Ouvre la page de détail d'un plat
+  void _ouvrirDetailPlat(Plat plat) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PlatDetailPage(
+          plat: plat,
+          estFavori: _estFavori(plat.id),
+          onToggleFavori: () => _toggleFavori(plat.id),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
+      // Fond de couleur douce
+      backgroundColor: const Color(0xFFF5F6FA),
+      
+      // En-tête de l'application avec dégradé
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+        title: const Text(
+          '🍽️ Menu du Restaurant',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            letterSpacing: 0.5,
+          ),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFFE67E22), // Orange brûlé
+                Color(0xFFD35400), // Orange foncé
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+          ),
+        ),
+        actions: [
+          // Badge du nombre de favoris
+          if (_favoris.isNotEmpty)
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.favorite, size: 18),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${_favoris.length}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+      
+      body: Column(
+        children: [
+          // Barre de filtres par catégories
+          CategoryFilter(
+            categories: categories,
+            categorieSelectionnee: categorieSelectionnee,
+            onCategorieSelectionnee: _onCategorieSelectionnee,
+          ),
+
+          // Divider subtil avec ombre
+          Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  Colors.grey.shade300,
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+
+          // Liste des plats filtrés
+          Expanded(
+            child: _buildPlatsList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Construit la liste des plats ou affiche un message si vide
+  Widget _buildPlatsList() {
+    if (platsFiltres.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              categorieSelectionnee == 'Favoris' 
+                  ? Icons.favorite_border 
+                  : Icons.search_off,
+              size: 64,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              categorieSelectionnee == 'Favoris'
+                  ? 'Aucun plat en favori'
+                  : 'Aucun plat dans cette catégorie',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            if (categorieSelectionnee == 'Favoris')
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  'Ajoutez des plats en favoris en cliquant sur ❤️',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
+              ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(12.0),
+      itemCount: platsFiltres.length,
+      itemBuilder: (context, index) {
+        final plat = platsFiltres[index];
+        // Correction: ajout de tous les paramètres requis
+        return PlatCard(
+          plat: plat,
+          estFavori: _estFavori(plat.id),
+          onTap: () => _ouvrirDetailPlat(plat),
+          onToggleFavori: () => _toggleFavori(plat.id),
+        );
+      },
     );
   }
 }
