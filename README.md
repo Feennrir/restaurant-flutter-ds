@@ -10,7 +10,7 @@ Une application mobile élégante pour consulter le menu d'un restaurant avec sy
 - **Vue détaillée** : Affichage complet des informations de chaque plat (description, prix, image)
 
 ## 📸 Video
-![Menu Restaurant Demo](./DS3_nathan_boileau.mov)
+![Menu Restaurant Demo](./DS3_nathan_boileau.mp4)
 
 ## 🏗️ Structure du projet
 
